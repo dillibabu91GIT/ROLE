@@ -1,3 +1,35 @@
+
+[defaults]
+host_key_checking=False
+deprecation_warnings=False
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+remote_tmp=/tmp
+roles_path=roles/
+comment_warnings=False
+command_warnings=False
+interpreter_python=auto
+ANSIBLE_DEPRECATION_WARNINGS=False
+ANSIBLE_COMMAND_WARNINGS=False
+
+---
+oracle_host: "10.15.25.168:5300"
+github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+username: "{{ lookup('env', 'ORA_USERNAME') }}"
+password: "{{ lookup('env', 'ORA_PASSWORD') }}"
+ORACLE_SID: "CNVDGUAT"
+zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
+zip_file_name_1: "{{ zip_file_url_1 | basename }}"
+ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
+PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
+oracle_deployment_dir: "/backup"
+...
+[all:vars]
+ansible_user=itdevtra
+ansible_ssh_port=22
+
+[oracle_servers]
+10.15.25.168
 name: Deploy Database
 
 on:
