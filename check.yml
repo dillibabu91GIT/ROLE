@@ -1,3 +1,25 @@
+Run cd /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db
+ansible-playbook 2.8.18
+  config file = /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/ansible.cfg
+  configured module search path = ['/home/itdevtra/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3.6/site-packages/ansible
+  executable location = /usr/bin/ansible-playbook
+  python version = 3.6.8 (default, Jan 14 2022, 11:04:20) [GCC 8.5.0 20210514 (Red Hat 8.5.0-7)]
+Using /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/ansible.cfg as config file
+host_list declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/inventory.ini as it did not pass it's verify_file() method
+script declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/inventory.ini as it did not pass it's verify_file() method
+auto declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/inventory.ini as it did not pass it's verify_file() method
+yaml declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/inventory.ini as it did not pass it's verify_file() method
+Parsed /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/inventory.ini inventory source with ini plugin
+
+PLAYBOOK: mcfdbdeployment.yml **************************************************
+1 plays in ./playbook/mcfdbdeployment.yml
+Warning: : Could not match supplied host pattern, ignoring: target
+
+PLAY [Deploy War Files to JBoss] ***********************************************
+skipping: no hosts matched
+
+PLAY RECAP *********************************************************************
 - name: Deploy War Files to JBoss
   hosts: target
   become: yes
