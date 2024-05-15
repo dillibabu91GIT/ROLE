@@ -1,4 +1,31 @@
+- name: Deploy War Files to JBoss
+  hosts: target
+  become: yes
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ GITHUB_WORKSPACE }}/config.yml"
+        name: config_vars
 
+    - name: Clone separate repository containing deploy.yml
+      git:
+        repo: https://github.com/example/ansible-role-jboss-deploy.git
+        dest: /path/to/ansible-role-jboss-deploy
+        version: master
+      become: true
+      become_user: your_user
+
+    - name: Include ansible-role-jboss-deploy 
+      include_role:
+        name: ansible-role-jboss-deploy
+        tasks_from: deploy.yml
+      vars:
+        owner: "{{ config_vars.owner }}"
+        repo: "{{ config_vars.repo }}"
+        branch: "{{ config_vars.branch }}"
+        github_token: "{{ config_vars.github_token }}"
+
+----------
 [defaults]
 host_key_checking=False
 deprecation_warnings=False
