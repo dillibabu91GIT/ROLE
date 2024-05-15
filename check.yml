@@ -1,3 +1,35 @@
+name: Deploy Database
+
+on:
+  workflow_dispatch:
+   inputs:
+      compile_date:
+        description: 'Compile date to deploy'
+        required: true 
+        type: string
+
+jobs:
+  deploy:
+    runs-on: 
+      group: rakbank-self-hosted-runner
+      labels: dehitdevtra1
+    environment: UAT
+
+    steps: 
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Run Ansible Playbook
+        env:
+          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
+          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
+          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
+        run: |
+          cd ${{ github.workspace }}
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }}"
+
+----------------
  rakbank-internal/mcf_db/.github/workflows/main.yml@refs/heads/RELEASE-DB-ROLE
 - name: Copy SQL files to Target Server
   copy:
