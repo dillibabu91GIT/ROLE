@@ -1,4 +1,4 @@
-
+ rakbank-internal/mcf_db/.github/workflows/main.yml@refs/heads/RELEASE-DB-ROLE
 - name: Copy SQL files to Target Server
   copy:
     src: "{{ zip_file_name }}/DEPLOY.sql"
