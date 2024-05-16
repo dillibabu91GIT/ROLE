@@ -1,3 +1,28 @@
+- name: Deploy War Files to JBoss
+  hosts: oracle_servers
+  become: itdevtra
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ GITHUB_WORKSPACE }}/config.yml"
+        name: config_vars
+
+    - name: Include ansible-role-oracle-deploy 
+      include_role:
+        name: ansible-role-oracle-deploy
+        tasks_from: main.yml
+      vars:
+        zip_file_name: "{{ config_vars.zip_file_name }}"  # Pass zip_file_name variable here
+        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"  # Add this line if needed in the role
+        username: "{{ config_vars.username }}"  # Add other required variables as needed
+        password: "{{ config_vars.password }}"
+        oracle_host: "{{ config_vars.oracle_host }}"
+        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
+        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
+        PATH: "{{ config_vars.PATH }}"
+        github_token: "{{ config_vars.github_token }}"
+-----------------
+
 TASK [Read configuration from config.yml] **************************************
 task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml:5
 ok: [10.15.25.168] => {
