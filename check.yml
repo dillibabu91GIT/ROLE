@@ -1,44 +1,30 @@
-name: Deploy Database
+playbook file
+- name: Deploy Database
+  hosts: oracle_servers
+  become: yes
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ GITHUB_WORKSPACE }}/config.yml"
+        name: config_vars
 
-on:
-  workflow_dispatch:
-    inputs:
-      compile_date:
-        description: 'Compile date to deploy'
-        required: true 
-        type: string
-
-jobs:
-  deploy:
-    runs-on: 
-      group: rakbank-self-hosted-runner
-      labels: dehitdevtra1
-    environment: UAT
-
-    steps: 
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Run Ansible Playbook
-        env:
-          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
-          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
-          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
-          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
-        run: |
-          cd ${{ github.workspace }}
-          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }} deploy_mode=true"
-
--------------------------------
-  - hosts: '{{ target }}'
-    become: yes
-    become_user: itdevtra
-    gather_facts: no
-    roles:
-      - mcfdbdeployment
-------------------------------------
-role default file
----
+    - name: Include ansible-role-database-deploy
+      include_role:
+        name: ansible-role-database-deploy
+        tasks_from: main.yml
+      vars:
+        oracle_host: "{{ config_vars.oracle_host }}"
+        github_token: "{{ config_vars.github_token }}"
+        username: "{{ config_vars.username }}"
+        password: "{{ config_vars.password }}"
+        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
+        zip_file_name: "{{ config_vars.zip_file_name }}"
+        zip_file_name_1: "{{ config_vars.zip_file_name_1 }}"
+        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
+        PATH: "{{ config_vars.PATH }}"
+        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
+---------------------------------
+config file
 oracle_host: "10.15.25.168:5300"
 github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
 username: "{{ lookup('env', 'ORA_USERNAME') }}"
@@ -47,58 +33,6 @@ ORACLE_SID: "CNVDGUAT"
 zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
 zip_file_name_1: "{{ zip_file_url_1 | basename }}"
 ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-- name: Copy SQL files to Target Server
-  copy:
-    src: "{{ zip_file_name }}/DEPLOY.sql"
-    dest: "{{ oracle_deployment_dir }}/DEPLOY.sql"
-    
-- name: Deploy Database with custom timeout
-  become: true
-  become_user: itdevtra
-  shell: |
-    export ORACLE_HOME=/oracle19c/app/oracle/product/19.3.0/db_home
-    export PATH=$ORACLE_HOME/bin:$PATH
-    sqlplus -s {{ username }}/{{ password }}@{{ oracle_host }}/{{ ORACLE_SID }} @{{ oracle_deployment_dir }}/DEPLOY.sql | tee /tmp/deploy_output.log
-    grep -q 'ORA-' /tmp/deploy_output.log && exit 1 || exit 0
-  async: 60
-  poll: 0
-  register: deploy_result
-
-- name: Wait for the deploy task to finish
-  async_status:
-    jid: "{{ deploy_result.ansible_job_id }}"
-  register: job_result
-  until: job_result.finished
-  retries: 60
-  delay: 1
-------------------------
-ansible config file
-
-[defaults]
-host_key_checking=False
-deprecation_warnings=False
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
-remote_tmp=/tmp
-roles_path=roles/
-comment_warnings=False
-command_warnings=False
-interpreter_python=auto
-ANSIBLE_DEPRECATION_WARNINGS=False
-ANSIBLE_COMMAND_WARNINGS=False
-------------------------
-inventory file
-
-[all:vars]
-ansible_user=itdevtra
-ansible_ssh_port=22
-
-[oracle_servers]
-10.15.25.168
-
 PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
 oracle_deployment_dir: "/backup"
-...
----------------------------------------------------
-role/tasks/file
-
+----------------------------------
