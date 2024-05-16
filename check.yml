@@ -36,3 +36,76 @@ ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
 PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
 oracle_deployment_dir: "/backup"
 ----------------------------------
+
+workflow file
+
+name: Deploy Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      compile_date:
+        description: 'Compile date to deploy'
+        required: true 
+        type: string
+
+jobs:
+  deploy:
+    runs-on: 
+      group: rakbank-self-hosted-runner
+      labels: dehitdevtra1
+  
+
+    steps: 
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Clone ansible-1 repository
+        run: |
+          if [ ! -d "../ansible-1" ]; then
+            git clone https://github.com/dillibabu91GIT/ansible-1 ../ansible-1
+          else
+            echo "Directory ../ansible-1 already exists."
+          fi
+
+      - name: Debug Working Directory
+        run: |
+          ls -al
+          pwd
+
+      - name: Run Ansible Playbook for Database Deployment
+        env:
+          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
+          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
+          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
+        run: |
+          cd ${{ github.workspace }}
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers GITHUB_WORKSPACE=${{ github.workspace }}"
+---------------------------------------------------------------
+
+this is ansible.cfg file
+
+[defaults]
+host_key_checking=False
+deprecation_warnings=False
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+remote_tmp=/tmp
+roles_path=roles/
+comment_warnings=False
+command_warnings=False
+interpreter_python=auto
+ANSIBLE_DEPRECATION_WARNINGS=False
+ANSIBLE_COMMAND_WARNINGS=False
+
+---------------
+this is my inventory file
+
+[all:vars]
+ansible_user=itdevtra
+ansible_ssh_port=22
+
+[oracle_servers]
+10.15.25.168
+
