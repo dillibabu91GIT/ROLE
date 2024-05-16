@@ -30,65 +30,9 @@ fatal: [10.15.25.168]: FAILED! => {
 PLAY RECAP *********************************************************************
 10.15.25.168               : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
 Error: Process completed with exit code 2.
-- name: Deploy War Files to JBoss
-  hosts: target
-  become: yes
-  tasks:
-    - name: Read configuration from config.yml
-      include_vars:
-        file: "{{ GITHUB_WORKSPACE }}/config.yml"
-        name: config_vars
+---------------------------------------------
 
-    - name: Clone separate repository containing deploy.yml
-      git:
-        repo: https://github.com/example/ansible-role-jboss-deploy.git
-        dest: /path/to/ansible-role-jboss-deploy
-        version: master
-      become: true
-      become_user: your_user
-
-    - name: Include ansible-role-jboss-deploy 
-      include_role:
-        name: ansible-role-jboss-deploy
-        tasks_from: deploy.yml
-      vars:
-        owner: "{{ config_vars.owner }}"
-        repo: "{{ config_vars.repo }}"
-        branch: "{{ config_vars.branch }}"
-        github_token: "{{ config_vars.github_token }}"
-
-----------
-[defaults]
-host_key_checking=False
-deprecation_warnings=False
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
-remote_tmp=/tmp
-roles_path=roles/
-comment_warnings=False
-command_warnings=False
-interpreter_python=auto
-ANSIBLE_DEPRECATION_WARNINGS=False
-ANSIBLE_COMMAND_WARNINGS=False
-
----
-oracle_host: "10.15.25.168:5300"
-github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
-username: "{{ lookup('env', 'ORA_USERNAME') }}"
-password: "{{ lookup('env', 'ORA_PASSWORD') }}"
-ORACLE_SID: "CNVDGUAT"
-zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
-zip_file_name_1: "{{ zip_file_url_1 | basename }}"
-ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
-oracle_deployment_dir: "/backup"
-...
-[all:vars]
-ansible_user=itdevtra
-ansible_ssh_port=22
-
-[oracle_servers]
-10.15.25.168
+this is my workflow
 name: Deploy Database
 
 on:
@@ -104,7 +48,7 @@ jobs:
     runs-on: 
       group: rakbank-self-hosted-runner
       labels: dehitdevtra1
-    environment: UAT
+  
 
     steps: 
       - name: Checkout Repository
@@ -118,10 +62,32 @@ jobs:
           COMPILE_DATE: ${{ github.event.inputs.compile_date }}
         run: |
           cd ${{ github.workspace }}
-          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }}"
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers GITHUB_WORKSPACE=${{ github.workspace }}"
+-------------------------------
+this is my playbook file
 
-----------------
- rakbank-internal/mcf_db/.github/workflows/main.yml@refs/heads/RELEASE-DB-ROLE
+- name: Deploy War Files to JBoss
+  hosts: oracle_servers
+  become: itdevtra
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ GITHUB_WORKSPACE }}/config.yml"
+        name: config_vars
+
+    - name: Include ansible-role-oracle-deploy 
+      include_role:
+        name: ansible-role-oracle-deploy
+        tasks_from: main.yml
+      vars:
+        owner: "{{ config_vars.owner }}"
+        repo: "{{ config_vars.repo }}"
+        branch: "{{ config_vars.branch }}"
+        github_token: "{{ config_vars.github_token }}"	  
+-----------------
+this is my role/tasks file
+
+
 - name: Copy SQL files to Target Server
   copy:
     src: "{{ zip_file_name }}/DEPLOY.sql"
@@ -146,36 +112,43 @@ jobs:
   until: job_result.finished
   retries: 60
   delay: 1
-----------------
+-------------------------
+this is ansible.cfg file
+[defaults]
+host_key_checking=False
+deprecation_warnings=False
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+remote_tmp=/tmp
+roles_path=roles/
+comment_warnings=False
+command_warnings=False
+interpreter_python=auto
+ANSIBLE_DEPRECATION_WARNINGS=False
+ANSIBLE_COMMAND_WARNINGS=False
+---------------
+this is my config file
 
+---
+oracle_host: "10.15.25.168:5300"
+github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+username: "{{ lookup('env', 'ORA_USERNAME') }}"
+password: "{{ lookup('env', 'ORA_PASSWORD') }}"
+ORACLE_SID: "CNVDGUAT"
+zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
+zip_file_name_1: "{{ zip_file_url_1 | basename }}"
+ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
+PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
+oracle_deployment_dir: "/backup"
+...
+-----------
+this is my inventory file
 
-- name: Get list of .war files in the GitHub repository
-  uri:
-    url: "https://api.github.com/repos/{{ owner }}/{{ repo }}/contents?ref={{ branch }}"
-    method: GET
-    headers:
-      Authorization: "token {{ github_token }}"
-  register: github_response
+[all:vars]
+ansible_user=itdevtra
+ansible_ssh_port=22
 
-- name: Download .war files from GitHub repository
-  get_url:
-    url: "{{ item.download_url }}"
-    dest: "/tmp/{{ item.name }}"
-    headers:
-      Authorization: "token {{ github_token }}"
-  loop: "{{ github_response.json | selectattr('name', 'match', '.*\\.war$') | list }}"
+[oracle_servers]
+10.15.25.168
 
-- name: Copy .war files to JBoss deployment directory
-  ansible.builtin.copy:
-    src: "/tmp/{{ item.name }}"
-    dest: "/opt/wildfly/standalone/deployments/"
-    owner: "wildfly"
-    group: "wildfly"
-    mode: '0777'
-    remote_src: yes  # Copy from Ansible controller
-  loop: "{{ github_response.json | selectattr('name', 'match', '.*\\.war$') | list }}"
-
-- name: Reload JBoss to deploy changes
-  ansible.builtin.shell:
-    cmd: "sh /opt/wildfly/bin/jboss-cli.sh --connect command=:reload"
-
+    
