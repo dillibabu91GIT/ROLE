@@ -1,65 +1,3 @@
-- name: Deploy War Files to JBoss
-  hosts: oracle_servers
-  become: itdevtra
-  tasks:
-    - name: Read configuration from config.yml
-      include_vars:
-        file: "{{ GITHUB_WORKSPACE }}/config.yml"
-        name: config_vars
-
-    - name: Include ansible-role-oracle-deploy 
-      include_role:
-        name: ansible-role-oracle-deploy
-        tasks_from: main.yml
-      vars:
-        zip_file_name: "{{ config_vars.zip_file_name }}"
-        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
-        username: "{{ config_vars.username }}"
-        password: "{{ config_vars.password }}"
-        oracle_host: "{{ config_vars.oracle_host }}"
-        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
-        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
-        PATH: "{{ config_vars.PATH }}"
-        github_token: "{{ config_vars.github_token }}"
-..............
----
-oracle_host: "10.15.25.168:5300"
-github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
-username: "{{ lookup('env', 'ORA_USERNAME') }}"
-password: "{{ lookup('env', 'ORA_PASSWORD') }}"
-ORACLE_SID: "CNVDGUAT"
-zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
-ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
-oracle_deployment_dir: "/backup"
-...
-
------------------------------
-- name: Deploy War Files to JBoss
-  hosts: oracle_servers
-  become: itdevtra
-  tasks:
-    - name: Read configuration from config.yml
-      include_vars:
-        file: "{{ GITHUB_WORKSPACE }}/config.yml"
-        name: config_vars
-
-    - name: Include ansible-role-oracle-deploy 
-      include_role:
-        name: ansible-role-oracle-deploy
-        tasks_from: main.yml
-      vars:
-        zip_file_name: "{{ config_vars.zip_file_name }}"  # Pass zip_file_name variable here
-        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"  # Add this line if needed in the role
-        username: "{{ config_vars.username }}"  # Add other required variables as needed
-        password: "{{ config_vars.password }}"
-        oracle_host: "{{ config_vars.oracle_host }}"
-        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
-        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
-        PATH: "{{ config_vars.PATH }}"
-        github_token: "{{ config_vars.github_token }}"
------------------
-this is my workflow
 name: Deploy Database
 
 on:
@@ -75,7 +13,7 @@ jobs:
     runs-on: 
       group: rakbank-self-hosted-runner
       labels: dehitdevtra1
-  
+    environment: UAT
 
     steps: 
       - name: Checkout Repository
@@ -89,32 +27,25 @@ jobs:
           COMPILE_DATE: ${{ github.event.inputs.compile_date }}
         run: |
           cd ${{ github.workspace }}
-          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers GITHUB_WORKSPACE=${{ github.workspace }}"
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }} deploy_mode=true rollback_mode=false cacherefresh_mode=false"
 -------------------------------
-this is my playbook file
-
-- name: Deploy War Files to JBoss
-  hosts: oracle_servers
-  become: itdevtra
-  tasks:
-    - name: Read configuration from config.yml
-      include_vars:
-        file: "{{ GITHUB_WORKSPACE }}/config.yml"
-        name: config_vars
-
-    - name: Include ansible-role-oracle-deploy 
-      include_role:
-        name: ansible-role-oracle-deploy
-        tasks_from: main.yml
-      vars:
-        owner: "{{ config_vars.owner }}"
-        repo: "{{ config_vars.repo }}"
-        branch: "{{ config_vars.branch }}"
-        github_token: "{{ config_vars.github_token }}"	  
------------------
-this is my role/tasks file
-
-
+  - hosts: '{{ target }}'
+    become: yes
+    become_user: itdevtra
+    gather_facts: no
+    roles:
+      - mcfdbdeployment
+------------------------------------
+role default file
+---
+oracle_host: "10.15.25.168:5300"
+github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+username: "{{ lookup('env', 'ORA_USERNAME') }}"
+password: "{{ lookup('env', 'ORA_PASSWORD') }}"
+ORACLE_SID: "CNVDGUAT"
+zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
+zip_file_name_1: "{{ zip_file_url_1 | basename }}"
+ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
 - name: Copy SQL files to Target Server
   copy:
     src: "{{ zip_file_name }}/DEPLOY.sql"
@@ -139,8 +70,9 @@ this is my role/tasks file
   until: job_result.finished
   retries: 60
   delay: 1
--------------------------
-this is ansible.cfg file
+------------------------
+ansible config file
+
 [defaults]
 host_key_checking=False
 deprecation_warnings=False
@@ -153,23 +85,8 @@ command_warnings=False
 interpreter_python=auto
 ANSIBLE_DEPRECATION_WARNINGS=False
 ANSIBLE_COMMAND_WARNINGS=False
----------------
-this is my config file
-
----
-oracle_host: "10.15.25.168:5300"
-github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
-username: "{{ lookup('env', 'ORA_USERNAME') }}"
-password: "{{ lookup('env', 'ORA_PASSWORD') }}"
-ORACLE_SID: "CNVDGUAT"
-zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
-zip_file_name_1: "{{ zip_file_url_1 | basename }}"
-ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
-oracle_deployment_dir: "/backup"
-...
------------
-this is my inventory file
+------------------------
+inventory file
 
 [all:vars]
 ansible_user=itdevtra
@@ -178,4 +95,9 @@ ansible_ssh_port=22
 [oracle_servers]
 10.15.25.168
 
-    
+PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
+oracle_deployment_dir: "/backup"
+...
+---------------------------------------------------
+role/tasks/file
+
