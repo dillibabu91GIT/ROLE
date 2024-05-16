@@ -2,7 +2,7 @@ name: Deploy Database
 
 on:
   workflow_dispatch:
-   inputs:
+    inputs:
       compile_date:
         description: 'Compile date to deploy'
         required: true 
@@ -27,7 +27,8 @@ jobs:
           COMPILE_DATE: ${{ github.event.inputs.compile_date }}
         run: |
           cd ${{ github.workspace }}
-          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }} deploy_mode=true rollback_mode=false cacherefresh_mode=false"
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }} deploy_mode=true"
+
 -------------------------------
   - hosts: '{{ target }}'
     become: yes
