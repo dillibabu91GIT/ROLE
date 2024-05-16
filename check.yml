@@ -1,13 +1,39 @@
-TASK [Include ansible-role-oracle-deploy] **************************************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml:10
-TASK [ansible-role-oracle-deploy : Copy SQL files to Target Server] ************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/roles/ansible-role-oracle-deploy/tasks/main.yml:2
-fatal: [10.15.25.168]: FAILED! => {
-    "msg": "An unhandled exception occurred while templating '{{ config_vars.zip_file_name }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15.25.168:5300', 'github_token': \"{{ lookup('env', 'TOKEN_GITHUB') }}\", 'username': \"{{ lookup('env', 'ORA_USERNAME') }}\", 'password': \"{{ lookup('env', 'ORA_PASSWORD') }}\", 'ORACLE_SID': 'CNVDGUAT', 'zip_file_name': \"/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL\", 'ORACLE_HOME': '/oracle19c/app/oracle/product/19.3.0/db_home', 'PATH': '{{ ORACLE_HOME }}/bin:{{ PATH }}', 'oracle_deployment_dir': '/backup'}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ config_vars.ORACLE_HOME }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15.25.168:5300', 'gi
-}
-PLAY RECAP *********************************************************************
-10.15.25.168               : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
-Error: Process completed with exit code 2.
+- name: Deploy War Files to JBoss
+  hosts: oracle_servers
+  become: itdevtra
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ GITHUB_WORKSPACE }}/config.yml"
+        name: config_vars
+
+    - name: Include ansible-role-oracle-deploy 
+      include_role:
+        name: ansible-role-oracle-deploy
+        tasks_from: main.yml
+      vars:
+        zip_file_name: "{{ config_vars.zip_file_name }}"
+        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
+        username: "{{ config_vars.username }}"
+        password: "{{ config_vars.password }}"
+        oracle_host: "{{ config_vars.oracle_host }}"
+        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
+        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
+        PATH: "{{ config_vars.PATH }}"
+        github_token: "{{ config_vars.github_token }}"
+..............
+---
+oracle_host: "10.15.25.168:5300"
+github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+username: "{{ lookup('env', 'ORA_USERNAME') }}"
+password: "{{ lookup('env', 'ORA_PASSWORD') }}"
+ORACLE_SID: "CNVDGUAT"
+zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
+ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
+PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
+oracle_deployment_dir: "/backup"
+...
+
 -----------------------------
 - name: Deploy War Files to JBoss
   hosts: oracle_servers
