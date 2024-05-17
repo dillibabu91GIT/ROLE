@@ -14,7 +14,7 @@ jobs:
       group: rakbank-self-hosted-runner
       labels: dehitdevtra1
 
-   
+    steps: 
       - name: Debug Working Directory
         run: |
           ls -al
