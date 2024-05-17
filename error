@@ -1,63 +1,10 @@
-name: Deploy Database
+TASK [Read configuration from config.yml] **************************************
+task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml:7
+fatal: [10.15.25.168]: FAILED! => {
+    "msg": "The task includes an option with an undefined variable. The error was: 'GITHUB_WORKSPACE' is undefined\n\nThe error appears to be in '/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml': line 7, column 7, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n  tasks:\n    - name: Read configuration from config.yml\n      ^ here\n"
+}
 
-on:
-  workflow_dispatch:
-    inputs:
-      compile_date:
-        description: 'Compile date to deploy'
-        required: true 
-        type: string
+PLAY RECAP *********************************************************************
+10.15.25.168               : ok=1    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
 
-jobs:
-  deploy:
-    runs-on: 
-      group: rakbank-self-hosted-runner
-      labels: dehitdevtra1
-
-    steps: 
-      - name: Install Git
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git
-
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Clone enterprise-ansible-roles repository
-        run: |
-          if [ ! -d "../enterprise-ansible-roles" ]; then
-            git clone https://github.com/rakbank-internal/enterprise-ansible-roles ../enterprise-ansible-roles
-          else
-            echo "Directory ../enterprise-ansible-roles already exists."
-          fi
-
-      - name: Install Ansible
-        run: |
-          sudo apt-get install -y ansible
-
-      - name: Install Ansible Roles
-        run: |
-          # Uncomment the below line if the role is available on Ansible Galaxy
-          # ansible-galaxy install rakbank.database-deployment-role
-          
-          # If the role is in a Git repository, clone it
-          if [ ! -d "roles/database-deployment-role" ]; then
-            git clone https://github.com/rakbank-internal/database-deployment-role roles/database-deployment-role
-          else
-            echo "Role database-deployment-role already exists."
-          fi
-
-      - name: Debug Working Directory
-        run: |
-          ls -al
-          pwd
-
-      - name: Run Ansible Playbook for Database Deployment
-        env:
-          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
-          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
-          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
-          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
-        run: |
-          cd ${{ github.workspace }}
-          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers GITHUB_WORKSPACE=${{ github.workspace }}"
+Error: Process completed with exit code 2.
