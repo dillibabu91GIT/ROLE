@@ -1,18 +1,3 @@
-TASK [Include database-deployment-role] ****************************************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml:12
-ERROR! the role 'database-deployment-role' was not found in /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/roles:/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/roles/database-deployment-role/tasks:/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook
-The error appears to be in '/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml': line 14, column 15, but may
-PLAY RECAP *********************************************************************
-10.15.25.168               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-be elsewhere in the file depending on the exact syntax problem.
-The offending line appears to be:
-      include_role:
-        name: database-deployment-role
-              ^ here
-Error: Process completed with exit code 2.
-
-when i run the below script i am getting above error
-
 name: Deploy Database
 
 on:
@@ -30,6 +15,38 @@ jobs:
       labels: dehitdevtra1
 
     steps: 
+      - name: Install Git
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Clone enterprise-ansible-roles repository
+        run: |
+          if [ ! -d "../enterprise-ansible-roles" ]; then
+            git clone https://github.com/rakbank-internal/enterprise-ansible-roles ../enterprise-ansible-roles
+          else
+            echo "Directory ../enterprise-ansible-roles already exists."
+          fi
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get install -y ansible
+
+      - name: Install Ansible Roles
+        run: |
+          # Uncomment the below line if the role is available on Ansible Galaxy
+          # ansible-galaxy install rakbank.database-deployment-role
+          
+          # If the role is in a Git repository, clone it
+          if [ ! -d "roles/database-deployment-role" ]; then
+            git clone https://github.com/rakbank-internal/database-deployment-role roles/database-deployment-role
+          else
+            echo "Role database-deployment-role already exists."
+          fi
+
       - name: Debug Working Directory
         run: |
           ls -al
