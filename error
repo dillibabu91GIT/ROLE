@@ -1,3 +1,18 @@
+TASK [Include database-deployment-role] ****************************************
+task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml:12
+ERROR! the role 'database-deployment-role' was not found in /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/roles:/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/roles/database-deployment-role/tasks:/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook
+The error appears to be in '/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml': line 14, column 15, but may
+PLAY RECAP *********************************************************************
+10.15.25.168               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+be elsewhere in the file depending on the exact syntax problem.
+The offending line appears to be:
+      include_role:
+        name: database-deployment-role
+              ^ here
+Error: Process completed with exit code 2.
+
+when i run the below script i am getting above error
+
 name: Deploy Database
 
 on:
