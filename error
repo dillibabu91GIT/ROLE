@@ -1,0 +1,47 @@
+Run if [ ! -d "../enterprise-ansible-roles" ]; then
+/ansible/GITHUB_RUNNER/actions-runner10/_work/_temp/eff84cc3-8ec0-47cc-bfd7-217ceb31abd5.sh: line 2: git: command not found
+Error: Process completed with exit code 127.
+
+when i run below workflow above error came
+
+name: Deploy Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      compile_date:
+        description: 'Compile date to deploy'
+        required: true 
+        type: string
+
+jobs:
+  deploy:
+    runs-on: 
+      group: rakbank-self-hosted-runner
+      labels: dehitdevtra1
+  
+
+    steps: 
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Clone enterprise-ansible-roles repository
+        run: |
+          if [ ! -d "../enterprise-ansible-roles" ]; then
+            git clone https://github.com/rakbank-internal/enterprise-ansible-roles ../enterprise-ansible-roles
+          else
+            echo "Directory ../enterprise-ansible-roles already exists."
+          fi
+      - name: Debug Working Directory
+        run: |
+          ls -al
+          pwd
+      - name: Run Ansible Playbook for Database Deployment
+        env:
+          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
+          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
+          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
+        run: |
+          cd ${{ github.workspace }}
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers GITHUB_WORKSPACE=${{ github.workspace }}"
