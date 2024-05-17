@@ -1,37 +1,64 @@
-TASK [Read configuration from config.yml] **************************************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml:7
-fatal: [10.15.25.168]: FAILED! => {
-    "msg": "The task includes an option with an undefined variable. The error was: 'GITHUB_WORKSPACE' is undefined\n\nThe error appears to be in '/ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml': line 7, column 7, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n  tasks:\n    - name: Read configuration from config.yml\n      ^ here\n"
-}
+[defaults]
+host_key_checking=False
+deprecation_warnings=False
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+#roles_path = roles/
+roles_path = roles/:../ansible-1/roles/
+comment_warnings=False
+command_warnings=False
+inventory = inventory.txt
+remote_user = ubuntu
+interpreter_python=auto
+ANSIBLE_DEPRECATION_WARNINGS=False
+ANSIBLE_COMMAND_WARNINGS=False
+allow_world_readable_tmpfiles=yes
+timeout=30
+ansible_pipelining=True
+ansible cfg
+-----------------------------------
+workflow
+name: Deploy JBoss Server
 
-PLAY RECAP *********************************************************************
-10.15.25.168               : ok=1    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+on:
+  workflow_dispatch:
 
-Error: Process completed with exit code 2.
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout ansible-2 repository
+        uses: actions/checkout@v2
+        with:
+          repository: dillibabu91GIT/ansible-2
+          ref: ${{ github.event.inputs.branch }}
 
+      # Remove or comment out the git clone step if you want to use the existing ansible-1 directory
 
-this my playbook file
-- name: Deploy Database
-  hosts: oracle_servers
-  become: yes
-  tasks:
-    - name: Read configuration from config.yml
-      include_vars:
-        file: "{{ GITHUB_WORKSPACE }}/config.yml"
-        name: config_vars
+      - name: Clone ansible-1 repository
+        run: |
+          if [ ! -d "../ansible-1" ]; then
+            git clone https://github.com/dillibabu91GIT/ansible-1 ../ansible-1
+          else
+            echo "Directory ../ansible-1 already exists."
+          fi
 
-    - name: Include ansible-role-database-deploy
-      include_role:
-        name: ansible-role-database-deploy
-        tasks_from: main.yml
-      vars:
-        oracle_host: "{{ config_vars.oracle_host }}"
-        github_token: "{{ config_vars.github_token }}"
-        username: "{{ config_vars.username }}"
-        password: "{{ config_vars.password }}"
-        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
-        zip_file_name: "{{ config_vars.zip_file_name }}"
-        zip_file_name_1: "{{ config_vars.zip_file_name_1 }}"
-        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
-        PATH: "{{ config_vars.PATH }}"
-        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
+      - name: Debug Working Directory
+        run: |
+          ls -al
+          pwd
+          
+      - name: Run Ansible playbook
+        env:
+          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+        run: |
+          ansible-playbook -vvv -i inventory.txt playbook/main.yml --extra-vars "GITHUB_WORKSPACE=${{ github.workspace }}"
+--------------------------
+config file
+jboss_controller: "3.109.5.198:9990"
+github_token:  "{{ lookup('env', 'TOKEN_GITHUB') }}"
+owner: "dillibabu91GIT"
+repo: "ansible-2"
+branch: "main"
+jboss_user: "demo"
+jboss_password: "test123"
