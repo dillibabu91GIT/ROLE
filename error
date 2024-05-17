@@ -8,3 +8,30 @@ PLAY RECAP *********************************************************************
 10.15.25.168               : ok=1    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
 
 Error: Process completed with exit code 2.
+
+
+this my playbook file
+- name: Deploy Database
+  hosts: oracle_servers
+  become: yes
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ GITHUB_WORKSPACE }}/config.yml"
+        name: config_vars
+
+    - name: Include ansible-role-database-deploy
+      include_role:
+        name: ansible-role-database-deploy
+        tasks_from: main.yml
+      vars:
+        oracle_host: "{{ config_vars.oracle_host }}"
+        github_token: "{{ config_vars.github_token }}"
+        username: "{{ config_vars.username }}"
+        password: "{{ config_vars.password }}"
+        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
+        zip_file_name: "{{ config_vars.zip_file_name }}"
+        zip_file_name_1: "{{ config_vars.zip_file_name_1 }}"
+        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
+        PATH: "{{ config_vars.PATH }}"
+        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
