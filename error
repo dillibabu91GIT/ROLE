@@ -2,10 +2,10 @@ name: Deploy Database
 
 on:
   workflow_dispatch:
-    inputs:
+   inputs:
       compile_date:
         description: 'Compile date to deploy'
-        required: true
+        required: true 
         type: string
 
 jobs:
@@ -13,24 +13,16 @@ jobs:
     runs-on: 
       group: rakbank-self-hosted-runner
       labels: dehitdevtra1
+   
 
     steps:
-      - name: Install Git
-        run: |
-          if ! command -v git &> /dev/null
-          then
-            echo "Git not found, installing..."
-            sudo apt-get update
-            sudo apt-get install -y git
-          else
-            echo "Git is already installed."
-          fi
-
       - name: Checkout mcf_db repository
         uses: actions/checkout@v2
         with:
           repository: rakbank-internal/mcf_db
           ref: ${{ github.event.inputs.branch }}
+
+    
 
       - name: Clone enterprise-ansible-roles repository
         run: |
