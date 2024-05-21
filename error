@@ -1,72 +1,13 @@
-this is my role/tasks file this is i am kept in 1st repo
-
-- name: Copy SQL files to Target Server
-  copy:
-    src: "{{ zip_file_name }}/DEPLOY.sql"
-    dest: "{{ oracle_deployment_dir }}/DEPLOY.sql"
-    
-- name: Deploy Database with custom timeout
-  become: true
-  become_user: itdevtra
-  shell: |
-    export ORACLE_HOME=/oracle19c/app/oracle/product/19.3.0/db_home
-    export PATH=$ORACLE_HOME/bin:$PATH
-    sqlplus -s {{ username }}/{{ password }}@{{ oracle_host }}/{{ ORACLE_SID }} @{{ oracle_deployment_dir }}/DEPLOY.sql | tee /tmp/deploy_output.log
-    grep -q 'ORA-' /tmp/deploy_output.log && exit 1 || exit 0
-  async: 60
-  poll: 0
-  register: deploy_result
-
-- name: Wait for the deploy task to finish
-  async_status:
-    jid: "{{ deploy_result.ansible_job_id }}"
-  register: job_result
-  until: job_result.finished
-  retries: 60
-  delay: 1
-......................
-this is my playbook this is i am kept in 2nd repo
-- name: Deploy Database
-  hosts: oracle_servers
-  become: yes
-  become_user: itdevtra
-
-  tasks:
-    - name: Read configuration from config.yml
-      include_vars:
-        file: "{{ destination }}/config.yml"
-        name: config_vars
-
-    - name: Include database-deployment-role
-      include_role:
-        name: database-deployment-role
-        tasks_from: main-deploy.yml
-      vars:
-        oracle_host: "{{ config_vars.oracle_host }}"
-        github_token: "{{ config_vars.github_token }}"
-        username: "{{ config_vars.username }}"
-        password: "{{ config_vars.password }}"
-        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
-        zip_file_name: "{{ config_vars.zip_file_name }}"
-        zip_file_name_1: "{{ config_vars.zip_file_name_1 }}"
-        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
-        PATH: "{{ config_vars.PATH }}"
-        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
-.................................
-
-this is my config.yml this is i am kept in 2nd repo
----
-oracle_host: "10.15.25.168:5300"
-github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
-owner: "rakbank-internal"
-repo: "mcf_db"
-branch: "RELEASE-DB-ROLE"
-username: "{{ lookup('env', 'ORA_USERNAME') }}"
-password: "{{ lookup('env', 'ORA_PASSWORD') }}"
-ORACLE_SID: "CNVDGUAT"
-zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
-ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
-oracle_deployment_dir: "/backup"
-...
-
+config_vars:
+  ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
+  ORACLE_SID: "CNVDGUAT"
+  PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
+  branch: "RELEASE-DB-ROLE"
+  github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+  oracle_deployment_dir: "/backup"
+  oracle_host: "10.15.25.168:5300"
+  owner: "rakbank-internal"
+  password: "{{ lookup('env', 'ORA_PASSWORD') }}"
+  repo: "mcf_db"
+  username: "{{ lookup('env', 'ORA_USERNAME') }}"
+  zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
