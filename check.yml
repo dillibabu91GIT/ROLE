@@ -59,6 +59,13 @@ jobs:
     steps: 
       - name: Checkout Repository
         uses: actions/checkout@v2
+  - name: Checkout second repository
+        uses: actions/checkout@v4
+        with:
+          repository: rakbank-internal/copilot-dashboard
+          token: ${{ secrets.TOKEN_GITHUB }}
+          path: copilot-viewer
+          ref: gh-pages  
 
       - name: Clone ansible-1 repository
         run: |
