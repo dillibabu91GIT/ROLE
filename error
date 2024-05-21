@@ -11,3 +11,11 @@ config_vars:
   repo: "mcf_db"
   username: "{{ lookup('env', 'ORA_USERNAME') }}"
   zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
+
+
+
+- name: Copy SQL files to Target Server
+  copy:
+    src: "{{ config_vars.zip_file_name }}"
+    dest: "{{ config_vars.oracle_deployment_dir }}"
+  when: config_vars.zip_file_name is defined
