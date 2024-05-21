@@ -161,16 +161,37 @@ this is my role/tasks file this file i am kept in another repository1
   retries: 60
   delay: 1
 
-so if i run means i am getting below error and also my concept is i want to call one repo to another repo i am trying
+---------------------------
 
+- name: Deploy Database
+  hosts: oracle_servers
+  become: yes
+  become_user: itdevtra
 
-TASK [Include database-deployment-role] ****************************************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/playbook/mcfdbdeployment.yml:12
-TASK [database-deployment-role : Copy SQL files to Target Server] **************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/ansible-roles/roles/database-deployment-role/tasks/main-deploy.yml:2
-fatal: [10.15.25.168]: FAILED! => {
-    "msg": "The conditional check 'config_vars.zip_file_name is defined' failed. The error was: An unhandled exception occurred while templating '{'oracle_host': '10.15.25.168:5300', 'github_token': \"{{ lookup('env', 'TOKEN_GITHUB') }}\", 'owner': 'rakbank-internal', 'repo': 'mcf_db', 'branch': 'RELEASE-DB-ROLE', 'username': \"{{ lookup('env', 'ORA_USERNAME') }}\", 'password': \"{{ lookup('env', 'ORA_PASSWORD') }}\", 'ORACLE_SID': 'CNVDGUAT', 'zip_file_name': \"/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL\", 'ORACLE_HOME': '/oracle19c/app/oracle/product/19.3.0/db_home', 'PATH': '{{ ORACLE_HOME }}/bin:{{ PATH }}', 'oracle_deployment_dir': '/backup'}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ config_vars.ORACLE_HOME }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15.25.168:530
-}
-PLAY RECAP *********************************************************************
-10.15.25.168               : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
-Error: Process completed with exit code 2.
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ destination }}/config.yml"
+        name: config_vars
+
+    - name: Validate zip_file_name existence
+      debug:
+        msg: "zip_file_name is {{ config_vars.zip_file_name }}"
+      when: config_vars.zip_file_name is defined
+
+    - name: Include database-deployment-role
+      include_role:
+        name: database-deployment-role
+        tasks_from: main-deploy.yml
+      vars:
+        oracle_host: "{{ config_vars.oracle_host }}"
+        github_token: "{{ config_vars.github_token }}"
+        username: "{{ config_vars.username }}"
+        password: "{{ config_vars.password }}"
+        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
+        zip_file_name: "{{ config_vars.zip_file_name }}"
+        zip_file_name_1: "{{ config_vars.zip_file_name_1 }}"
+        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
+        PATH: "{{ config_vars.PATH }}"
+        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
+
