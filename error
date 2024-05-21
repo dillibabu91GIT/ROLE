@@ -50,17 +50,47 @@ jobs:
           ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }}"    
 
 when i run the above script i am getting below error
+name: Deploy Database
+on:
+  workflow_dispatch:
+    inputs:
+      compile_date:
+        description: 'Compile date to deploy'
+        required: true
+        type: string
 
-Run actions/checkout@v4
-Syncing repository: rakbank-internal/enterprise-ansible-roles
-Getting Git version info
-The repository will be downloaded using the GitHub REST API
-To create a local Git repository instead, add Git 2.18 or higher to the PATH
-Downloading the archive
-404: Not Found
-Waiting 16 seconds before trying again
-Downloading the archive
-404: Not Found
-Waiting 12 seconds before trying again
-Downloading the archive
-Error: 404: Not Found
+jobs:
+  deploy:
+    runs-on: 
+      group: rakbank-self-hosted-runner
+      labels: dehitdevtra1
+    steps:
+      - name: Checkout mcf_db repository
+        uses: actions/checkout@v4
+        with:
+          repository: rakbank-internal/mcf_db
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Checkout enterprise-ansible-roles repository
+        uses: actions/checkout@v4
+        with:
+          repository: rakbank-internal/enterprise-ansible-roles
+          token: ${{ secrets.TOKEN_GITHUB }}
+          path: ansible-roles
+          ref: feature  
+
+      - name: Debug Working Directory
+        run: |
+          ls -al
+          pwd
+
+      - name: Run Ansible Playbook
+        env:
+          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
+          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
+          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
+        run: |
+          cd ansible-roles
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "target=oracle_servers destination=${{ github.workspace }}"
+
