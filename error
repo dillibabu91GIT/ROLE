@@ -1,8 +1,15 @@
-      - name: Checkout second repository
-        uses: actions/checkout@v4
-        with:
-          repository: rakbank-internal/copilot-dashboard
-          token: ${{ secrets.TOKEN_GITHUB }}
-          path: copilot-viewer
-          ref: gh-pages  
+    
 
+Run actions/checkout@v4
+Syncing repository: rakbank-internal/enterprise-ansible-roles
+Getting Git version info
+The repository will be downloaded using the GitHub REST API
+To create a local Git repository instead, add Git 2.18 or higher to the PATH
+Downloading the archive
+404: Not Found
+Waiting 16 seconds before trying again
+Downloading the archive
+404: Not Found
+Waiting 12 seconds before trying again
+Downloading the archive
+Error: 404: Not Found
