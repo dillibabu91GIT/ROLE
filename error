@@ -1,31 +1,87 @@
-TASK [database-deployment-role : Copy SQL files to Target Server] **************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/ansible-roles/roles/database-deployment-role/tasks/main-deploy.yml:2
-fatal: [10.15.25.168]: FAILED! => {
-    "msg": "An unhandled exception occurred while templating '{{ config_vars.zip_file_name }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15.25.168:5300', 'github_token': \"{{ lookup('env', 'TOKEN_GITHUB') }}\", 'owner': 'rakbank-internal', 'repo': 'mcf_db', 'branch': 'RELEASE-DB-ROLE', 'username': \"{{ lookup('env', 'ORA_USERNAME') }}\", 'password': \"{{ lookup('env', 'ORA_PASSWORD') }}\", 'ORACLE_SID': 'CNVDGUAT', 'zip_file_name': \"/ansible/UAT_ARTIFACTS/UAT4/{{ lookup('env', 'COMPILE_DATE') }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL\", 'ORACLE_HOME': '/oracle19c/app/oracle/product/19.3.0/db_home', 'PATH': '{{ ORACLE_HOME }}/bin:{{ PATH }}', 'oracle_deployment_dir': '/backup'}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ config_vars.ORACLE_HOME }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled e
-}
-PLAY RECAP *********************************************************************
-10.15.25.168               : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
-Error: Process completed with exit code 2.
+name: Deploy Database
+on:
+  workflow_dispatch:
+    inputs:
+      compile_date:
+        description: 'Compile date to deploy'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: 
+      group: rakbank-self-hosted-runner
+      labels: dehitdevtra1
+    steps:
+      - name: Checkout mcf_db repository
+        uses: actions/checkout@v4
+        with:
+          repository: rakbank-internal/mcf_db
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Checkout enterprise-ansible-roles repository
+        uses: actions/checkout@v4
+        with:
+          repository: rakbank-internal/enterprise-ansible-roles
+          token: ${{ secrets.TOKEN_GITHUB }}
+          path: ansible-roles
+          ref: gh-pages  
+
+      - name: Debug Working Directory
+        run: |
+          ls -al
+          pwd
+
+      - name: Run Ansible Playbook
+        env:
+          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
+          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
+          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
+        run: |
+          cd ${{ github.workspace }}
+          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "oracle_host=10.15.25.168:5300 github_token=${{ secrets.TOKEN_GITHUB }} owner=rakbank-internal repo=mcf_db branch=RELEASE-DB-ROLE username=${{ secrets.ORA_USERNAME }} password=${{ secrets.ORA_PASSWORD }} ORACLE_SID=CNVDGUAT compile_date=${{ github.event.inputs.compile_date }} ORACLE_HOME=/oracle19c/app/oracle/product/19.3.0/db_home PATH=/oracle19c/app/oracle/product/19.3.0/db_home/bin:/usr/bin oracle_deployment_dir=/backup destination=${{ github.workspace }}"
+
+
+-----------------------
 
 ---
-oracle_host: "10.15.25.168:5300"
+oracle_host: "{{ oracle_host }}"
 github_token: "{{ github_token }}"
-owner: "rakbank-internal"
-repo: "mcf_db"
-branch: "RELEASE-DB-ROLE"
+owner: "{{ owner }}"
+repo: "{{ repo }}"
+branch: "{{ branch }}"
 username: "{{ username }}"
 password: "{{ password }}"
-ORACLE_SID: "CNVDGUAT"
+ORACLE_SID: "{{ ORACLE_SID }}"
 zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ compile_date }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
-ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-PATH: "/oracle19c/app/oracle/product/19.3.0/db_home/bin:/usr/bin"
-oracle_deployment_dir: "/backup"
+ORACLE_HOME: "{{ ORACLE_HOME }}"
+PATH: "{{ PATH }}"
+oracle_deployment_dir: "{{ oracle_deployment_dir }}"
 
-TASK [database-deployment-role : Copy SQL files to Target Server] **************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/ansible-roles/roles/database-deployment-role/tasks/main-deploy.yml:2
-fatal: [10.15.25.168]: FAILED! => {
-    "msg": "An unhandled exception occurred while templating '{{ config_vars.zip_file_name }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15.25.168:5300', 'github_token': '{{ github_token }}', 'owner': 'rakbank-internal', 'repo': 'mcf_db', 'branch': 'RELEASE-DB-ROLE', 'username': '{{ username }}', 'password': '{{ password }}', 'ORACLE_SID': 'CNVDGUAT', 'zip_file_name': '/ansible/UAT_ARTIFACTS/UAT4/{{ compile_date }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL', 'ORACLE_HOME': '/oracle19c/app/oracle/product/19.3.0/db_home', 'PATH': '/oracle19c/app/oracle/product/19.3.0/db_home/bin:/usr/bin', 'oracle_deployment_dir': '/backup'}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ config_vars.github_token }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15
-}
-PLAY RECAP *********************************************************************
-10.15.25.168               : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
-Error: Process completed with exit code 2.
+-------------
+- name: Deploy Database
+  hosts: oracle_servers
+  become: yes
+  become_user: itdevtra
+
+  tasks:
+    - name: Read configuration from config.yml
+      include_vars:
+        file: "{{ destination }}/config.yml"
+        name: config_vars
+
+    - name: Include database-deployment-role
+      include_role:
+        name: database-deployment-role
+        tasks_from: main-deploy.yml
+      vars:
+        oracle_host: "{{ config_vars.oracle_host }}"
+        github_token: "{{ config_vars.github_token }}"
+        username: "{{ config_vars.username }}"
+        password: "{{ config_vars.password }}"
+        ORACLE_SID: "{{ config_vars.ORACLE_SID }}"
+        zip_file_name: "{{ config_vars.zip_file_name }}"
+        ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
+        PATH: "{{ config_vars.PATH }}"
+        oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
