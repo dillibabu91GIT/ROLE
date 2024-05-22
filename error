@@ -85,3 +85,12 @@ oracle_deployment_dir: "{{ oracle_deployment_dir }}"
         ORACLE_HOME: "{{ config_vars.ORACLE_HOME }}"
         PATH: "{{ config_vars.PATH }}"
         oracle_deployment_dir: "{{ config_vars.oracle_deployment_dir }}"
+-------------------
+TASK [database-deployment-role : Copy SQL files to Target Server] **************
+task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/ansible-roles/roles/database-deployment-role/tasks/main-deploy.yml:2
+fatal: [10.15.25.168]: FAILED! => {
+    "msg": "An unhandled exception occurred while templating '{{ config_vars.zip_file_name }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '{{ oracle_host }}', 'github_token': '{{ github_token }}', 'owner': '{{ owner }}', 'repo': '{{ repo }}', 'branch': '{{ branch }}', 'username': '{{ username }}', 'password': '{{ password }}', 'ORACLE_SID': '{{ ORACLE_SID }}', 'zip_file_name': '/ansible/UAT_ARTIFACTS/UAT4/{{ compile_date }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL', 'ORACLE_HOME': '{{ ORACLE_HOME }}', 'PATH': '{{ PATH }}', 'oracle_deployment_dir': '{{ oracle_deployment_dir }}'}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ config_vars.oracle_host }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '{{ oracle_host }}', 'github_token': '{{ github_token }}'
+}
+PLAY RECAP *********************************************************************
+10.15.25.168               : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+Error: Process completed with exit code 2.
