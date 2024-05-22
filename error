@@ -20,3 +20,12 @@ zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ compile_date }}/RAK_IB_CONVERGENC
 ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
 PATH: "/oracle19c/app/oracle/product/19.3.0/db_home/bin:/usr/bin"
 oracle_deployment_dir: "/backup"
+
+TASK [database-deployment-role : Copy SQL files to Target Server] **************
+task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/mcf_db/mcf_db/ansible-roles/roles/database-deployment-role/tasks/main-deploy.yml:2
+fatal: [10.15.25.168]: FAILED! => {
+    "msg": "An unhandled exception occurred while templating '{{ config_vars.zip_file_name }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15.25.168:5300', 'github_token': '{{ github_token }}', 'owner': 'rakbank-internal', 'repo': 'mcf_db', 'branch': 'RELEASE-DB-ROLE', 'username': '{{ username }}', 'password': '{{ password }}', 'ORACLE_SID': 'CNVDGUAT', 'zip_file_name': '/ansible/UAT_ARTIFACTS/UAT4/{{ compile_date }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL', 'ORACLE_HOME': '/oracle19c/app/oracle/product/19.3.0/db_home', 'PATH': '/oracle19c/app/oracle/product/19.3.0/db_home/bin:/usr/bin', 'oracle_deployment_dir': '/backup'}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ config_vars.github_token }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{'oracle_host': '10.15
+}
+PLAY RECAP *********************************************************************
+10.15.25.168               : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+Error: Process completed with exit code 2.
