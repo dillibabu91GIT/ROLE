@@ -1,3 +1,7 @@
+rakbank-internal/RetailOnboarding-DB/.github/workflows/main.yml@refs/heads/RETAIL-DB-ROLE
+rakbank-internal/SMEDigitalBank-DB/.github/workflows/main.yml@refs/heads/SME-DB-ROLE
+
+
 name: Deploy Database
 on:
   workflow_dispatch:
