@@ -1,63 +1,3 @@
-name: IBPS-warfileinstall
-run-name: IBPS-warfileinstall-${{ github.event.inputs.release_version }}
-
-on:
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: 'Release version to deploy'
-        required: true 
-        type: string
-      war_file_path:
-        description: 'Path to the WAR file on the target server'
-        required: true
-        type: string
-        default: '/ibm/IBM/WebSphere/AppServer/profiles/AppSrv01/installedApps/antibpsapp1Cell01/KYC_Remediation.war'
-      war_file_name:
-        description: 'Name of the WAR file'
-        required: true
-        type: string
-        default: 'KYC_Remediation.war'
-      app_name:
-        description: 'Name of the deployed application'
-        required: true
-        type: string
-        default: 'KYC_Remediation_war'
-      context_root:
-        description: 'Context root of the deployed application'
-        required: true
-        type: string
-        default: '/KYC_Remediation'
-
-jobs:
-  deploy:
-    runs-on:
-      group: rakbank-self-hosted-runner
-      labels: [dehitdevtra1]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Make war-install-in-was.sh executable
-      run: chmod +x war-install-in-was.sh
-  
-    - name: Run Ansible Playbook
-      env:
-        TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
-        release_version: ${{ github.event.inputs.release_version }}
-        war_file_path: ${{ github.event.inputs.war_file_path }}
-        war_file_name: ${{ github.event.inputs.war_file_name }}
-        app_name: ${{ github.event.inputs.app_name }}
-        context_root: ${{ github.event.inputs.context_root }}
-      run: |
-        cd ${{ github.workspace }}
-        ansible-playbook -vvv -b --extra-vars "target=target_wasuat209 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
-        # Uncomment and modify the lines below to run the playbook on additional targets
-        # ansible-playbook -vvv -b --extra-vars "target=target_wasuat210 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
-        # ansible-playbook -vvv -b --extra-vars "target=target_wasreplica86 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
-
----------------
 name: IBPS-loose-file-deployment
 run-name: IBPS-loose-file-deployment-${{ github.event.inputs.release_version }}
 on:
@@ -65,7 +5,7 @@ on:
     inputs:
       release_version:
         description: 'Release version to deploy'
-        required: true 
+        required: true
         type: string
       tag:
         description: 'Release tag name'
@@ -76,22 +16,21 @@ on:
         required: true
         type: string
       deploy_mode:
-        description: 'deploy loose file'
+        description: 'Deploy loose file'
         required: true
         type: string
         default: 'false'
       rollback_mode:
-        description: 'rollback loose file'
+        description: 'Rollback loose file'
         required: true
         type: string
-        default: 'false'  
-         
+        default: 'false'
 
 jobs:
   deploy:
     runs-on:
-     group: rakbank-self-hosted-runner
-     labels: dehitdevtra1
+      group: rakbank-self-hosted-runner
+      labels: [dehitdevtra1]
 
     steps:
     - name: Checkout code
@@ -101,141 +40,37 @@ jobs:
       run: |
         ls -al
         pwd
+
     - name: Make deploy.sh and rollback.sh executable
       run: |
         chmod +x deploy.sh rollback.sh
-  
+
     - name: Download IBPS Release
       uses: robinraju/release-downloader@v1.9
       id: download_release
       with:
-       repository: rakbank-internal/ibps-was-ansible-cd
-       tag: ${{ github.event.inputs.tag }}
-       fileName: ${{ github.event.inputs.fileName }}
+        repository: rakbank-internal/ibps-was-ansible-cd
+        tag: ${{ github.event.inputs.tag }}
+        fileName: ${{ github.event.inputs.fileName }}
       env:
-       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-       
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Set downloaded file URL as an environment variable
-      run: |
-        #echo "ZIP_FILE_URL=/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/${{ github.event.inputs.fileName }}" >> $GITHUB_ENV 
-        echo "ZIP_FILE_URL=${{ github.workspace }}/${{ github.event.inputs.fileName }}" >> $GITHUB_ENV 
-    
+      run: echo "ZIP_FILE_URL=${{ github.workspace }}/${{ github.event.inputs.fileName }}" >> $GITHUB_ENV
+
     - name: Display ZIP_FILE_URL
-      run: |
-        echo $ZIP_FILE_URL        
+      run: echo $ZIP_FILE_URL
 
     - name: Run Ansible Playbook
       env:
         TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
         release_version: ${{ github.event.inputs.release_version }}
+        deploy_mode: ${{ github.event.inputs.deploy_mode }}
+        rollback_mode: ${{ github.event.inputs.rollback_mode }}
       run: |
         cd ${{ github.workspace }}
-        ansible-playbook -vvv -b --extra-vars "target=target_wasuat209 destination=${{ github.workspace }} deploy_mode=${{ github.event.inputs.deploy_mode }} rollback_mode=${{ github.event.inputs.rollback_mode }} release_version=${release_version}" ./playbook/IBPS-loose-file-deployment.yml #Cluster ip:10.15.11.209
-        #ansible-playbook -vvv -b --extra-vars "target=target_wasuat210 destination=${{ github.workspace }} deploy_mode=${{ github.event.inputs.deploy_mode }} rollback_mode=${{ github.event.inputs.rollback_mode }} release_version=${release_version}" ./playbook/IBPS-loose-file-deployment.yml #Cluster ip:10.15.11.210
-        #ansible-playbook -vvv -b --extra-vars "target=target_wasreplica86 destination=${{ github.workspace }} deploy_mode=${{ github.event.inputs.deploy_mode }} rollback_mode=${{ github.event.inputs.rollback_mode }} release_version=${release_version}" ./playbook/IBPS-loose-file-deployment.yml #replica ip:10.15.24.86
+        ansible-playbook -vvv -b --extra-vars "target=target_wasuat209 destination=${{ github.workspace }} deploy_mode=${{ env.deploy_mode }} rollback_mode=${{ env.rollback_mode }} release_version=${{ env.release_version }}" ./playbook/IBPS-loose-file-deployment.yml
+        # Uncomment and modify the lines below to run the playbook on additional targets
+        # ansible-playbook -vvv -b --extra-vars "target=target_wasuat210 destination=${{ github.workspace }} deploy_mode=${{ env.deploy_mode }} rollback_mode=${{ env.rollback_mode }} release_version=${{ env.release_version }}" ./playbook/IBPS-loose-file-deployment.yml
+        # ansible-playbook -vvv -b --extra-vars "target=target_wasreplica86 destination=${{ github.workspace }} deploy_mode=${{ env.deploy_mode }} rollback_mode=${{ env.rollback_mode }} release_version=${{ env.release_version }}" ./playbook/IBPS-loose-file-deployment.yml
 
-
---------------------------------------
-- name: Deploy Database
-  hosts: oracle_servers
-  become: yes
-  become_user: itdevtra
-
-  tasks:
-    - name: Include sme-retail-deploy-role
-      include_role:
-        name: sme-retail-deploy-role
-        tasks_from: main-deploy.yml
-      vars:
-        oracle_host: "10.15.25.168:5300"
-        github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
-        owner: "rakbank-internal"
-        repo: "SMEDigitalBank-DB"
-        branch: "SME-DB-ROLE"
-        username: "{{ lookup('env', 'ORA_USERNAME') }}"
-        password: "{{ lookup('env', 'ORA_PASSWORD') }}"
-        ORACLE_SID: "CNVDGUAT"
-        zip_file_url: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/deploy-sql/{{ lookup('env', 'RELEASE_VERSION') }}/deploy-sql-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
-        zip_file_name: "{{ zip_file_url | basename }}"
-        zip_file_url_1: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/dbscript/{{ lookup('env', 'RELEASE_VERSION') }}/dbscript-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
-        zip_file_name_1: "{{ zip_file_url_1 | basename }}"
-        zip_file_url_2: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/rollback-sql/{{ lookup('env', 'RELEASE_VERSION') }}/rollback-sql-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
-        zip_file_name_2: "{{ zip_file_url_2 | basename }}"
-        ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-        PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
-        oracle_deployment_dir: "/backup"
------------------
-[oracle_servers]
-10.15.25.168 ansible_user=itdevtra
-
------------------------
-
----
-oracle_host: "{{ oracle_host }}"
-github_token: "{{ github_token }}"
-owner: "{{ owner }}"
-repo: "{{ repo }}"
-branch: "{{ branch }}"
-username: "{{ username }}"
-password: "{{ password }}"
-ORACLE_SID: "{{ ORACLE_SID }}"
-zip_file_name: "/ansible/UAT_ARTIFACTS/UAT4/{{ compile_date }}/RAK_IB_CONVERGENCE_PATCHES_CR_UAT4/DB_SQL"
-ORACLE_HOME: "{{ ORACLE_HOME }}"
-PATH: "{{ PATH }}"
-oracle_deployment_dir: "{{ oracle_deployment_dir }}"
-
--------------
- - name: Deploy Database
-  hosts: oracle_servers
-  become: yes
-  become_user: itdevtra
-
-  tasks:
-    - name: Include sme-retail-deploy-role
-      include_role:
-        name: sme-retail-deploy-role
-        tasks_from: main-deploy.yml
-      vars:
-        oracle_host: "10.15.25.168:5300"
-        github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
-        owner: "rakbank-internal"
-        repo: "SMEDigitalBank-DB"
-        branch: "SME-DB-ROLE"
-        username: "{{ lookup('env', 'ORA_USERNAME') }}"
-        password: "{{ lookup('env', 'ORA_PASSWORD') }}"
-        ORACLE_SID: "CNVDGUAT"
-        zip_file_url: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/deploy-sql/{{ lookup('env', 'RELEASE_VERSION') }}/deploy-sql-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
-        zip_file_name: "{{ zip_file_url | basename }}"
-        zip_file_url_1: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/dbscript/{{ lookup('env', 'RELEASE_VERSION') }}/dbscript-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
-        zip_file_name_1: "{{ zip_file_url_1 | basename }}"
-        zip_file_url_2: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/rollback-sql/{{ lookup('env', 'RELEASE_VERSION') }}/rollback-sql-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
-        zip_file_name_2: "{{ zip_file_url_2 | basename }}"
-        ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
-        PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
-        oracle_deployment_dir: "/backup"
--------------------
-Run cd /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB
-ansible-playbook 2.8.18
-  config file = /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/ansible.cfg
-  configured module search path = ['/home/itdevtra/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /usr/lib/python3.6/site-packages/ansible
-  executable location = /usr/bin/ansible-playbook
-  python version = 3.6.8 (default, Jan 14 2022, 11:04:20) [GCC 8.5.0 20210514 (Red Hat 8.5.0-7)]
-Using /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/ansible.cfg as config file
-host_list declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/inventory.text as it did not pass it's verify_file() method
-script declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/inventory.text as it did not pass it's verify_file() method
-auto declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/inventory.text as it did not pass it's verify_file() method
-yaml declined parsing /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/inventory.text as it did not pass it's verify_file() method
-Parsed /ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/inventory.text inventory source with ini plugin
-ERROR! Syntax Error while loading YAML.
-  did not find expected '-' indicator
-
-The error appears to be in '/ansible/GITHUB_RUNNER/actions-runner10/_work/SMEDigitalBank-DB/SMEDigitalBank-DB/playbook/smedbdeployment.yml': line 2, column 3, but may
-be elsewhere in the file depending on the exact syntax problem.
-
-The offending line appears to be:
-
- - name: Deploy Database
-  hosts: oracle_servers
-  ^ here
-Error: Process completed with exit code 4.
