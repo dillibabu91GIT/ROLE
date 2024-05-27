@@ -1,5 +1,6 @@
 name: IBPS-warfileinstall
 run-name: IBPS-warfileinstall-${{ github.event.inputs.release_version }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -28,20 +29,18 @@ on:
         type: string
         default: '/KYC_Remediation'
 
-
 jobs:
   deploy:
     runs-on:
-     group: rakbank-self-hosted-runner
-     labels: dehitdevtra1
+      group: rakbank-self-hosted-runner
+      labels: [dehitdevtra1]
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Make war-install-in-was.sh executable
-      run: |
-        chmod +x war-install-in-was.sh
+      run: chmod +x war-install-in-was.sh
   
     - name: Run Ansible Playbook
       env:
@@ -53,9 +52,11 @@ jobs:
         context_root: ${{ github.event.inputs.context_root }}
       run: |
         cd ${{ github.workspace }}
-        ansible-playbook -vvv -b --extra-vars "target=target_wasuat209 destination=${{ github.workspace }} release_version=${release_version} war_file_path=${war_file_path} war_file_name=${war_file_name} app_name=${app_name} context_root=${context_root}" ./playbook/IBPS-warfileinstall.yml #Cluster ip:10.15.11.209
-        #ansible-playbook -vvv -b --extra-vars "target=target_wasuat210 destination=${{ github.workspace }} release_version=${release_version} war_file_path=${war_file_path} war_file_name=${war_file_name} app_name=${app_name} context_root=${context_root}" ./playbook/IBPS-warfileinstall.yml #Cluster ip:10.15.11.210
-        #ansible-playbook -vvv -b --extra-vars "target=target_wasreplica86 destination=${{ github.workspace }} release_version=${release_version} war_file_path=${war_file_path} war_file_name=${war_file_name} app_name=${app_name} context_root=${context_root}" ./playbook/IBPS-warfileinstall.yml #replica ip:10.15.24.86
+        ansible-playbook -vvv -b --extra-vars "target=target_wasuat209 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
+        # Uncomment and modify the lines below to run the playbook on additional targets
+        # ansible-playbook -vvv -b --extra-vars "target=target_wasuat210 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
+        # ansible-playbook -vvv -b --extra-vars "target=target_wasreplica86 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
+
 ---------------
 name: IBPS-loose-file-deployment
 run-name: IBPS-loose-file-deployment-${{ github.event.inputs.release_version }}
