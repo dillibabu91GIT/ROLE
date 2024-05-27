@@ -1,51 +1,34 @@
-rakbank-internal/RetailOnboarding-DB/.github/workflows/main.yml@refs/heads/RETAIL-DB-ROLE
-rakbank-internal/SMEDigitalBank-DB/.github/workflows/main.yml@refs/heads/SME-DB-ROLE
+- name: Deploy Database
+  hosts: oracle_servers
+  become: yes
+  become_user: itdevtra
 
-
-name: Deploy Database
-on:
-  workflow_dispatch:
-    inputs:
-      compile_date:
-        description: 'Compile date to deploy'
-        required: true
-        type: string
-
-jobs:
-  deploy:
-    runs-on: 
-      group: rakbank-self-hosted-runner
-      labels: dehitdevtra1
-    steps:
-      - name: Checkout mcf_db repository
-        uses: actions/checkout@v4
-        with:
-          repository: rakbank-internal/mcf_db
-          ref: ${{ github.event.inputs.branch }}
-
-      - name: Checkout enterprise-ansible-roles repository
-        uses: actions/checkout@v4
-        with:
-          repository: rakbank-internal/enterprise-ansible-roles
-          token: ${{ secrets.TOKEN_GITHUB }}
-          path: ansible-roles
-          ref: gh-pages  
-
-      - name: Debug Working Directory
-        run: |
-          ls -al
-          pwd
-
-      - name: Run Ansible Playbook
-        env:
-          TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
-          ORA_USERNAME: ${{ secrets.ORA_USERNAME }}
-          ORA_PASSWORD: ${{ secrets.ORA_PASSWORD }}
-          COMPILE_DATE: ${{ github.event.inputs.compile_date }}
-        run: |
-          cd ${{ github.workspace }}
-          ansible-playbook -vvv -b -i inventory.ini ./playbook/mcfdbdeployment.yml --extra-vars "oracle_host=10.15.25.168:5300 github_token=${{ secrets.TOKEN_GITHUB }} owner=rakbank-internal repo=mcf_db branch=RELEASE-DB-ROLE username=${{ secrets.ORA_USERNAME }} password=${{ secrets.ORA_PASSWORD }} ORACLE_SID=CNVDGUAT compile_date=${{ github.event.inputs.compile_date }} ORACLE_HOME=/oracle19c/app/oracle/product/19.3.0/db_home PATH=/oracle19c/app/oracle/product/19.3.0/db_home/bin:/usr/bin oracle_deployment_dir=/backup destination=${{ github.workspace }}"
-
+  tasks:
+    - name: Include sme-retail-deploy-role
+      include_role:
+        name: sme-retail-deploy-role
+        tasks_from: main-deploy.yml
+      vars:
+        oracle_host: "10.15.25.168:5300"
+        github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+        owner: "rakbank-internal"
+        repo: "SMEDigitalBank-DB"
+        branch: "SME-DB-ROLE"
+        username: "{{ lookup('env', 'ORA_USERNAME') }}"
+        password: "{{ lookup('env', 'ORA_PASSWORD') }}"
+        ORACLE_SID: "CNVDGUAT"
+        zip_file_url: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/deploy-sql/{{ lookup('env', 'RELEASE_VERSION') }}/deploy-sql-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
+        zip_file_name: "{{ zip_file_url | basename }}"
+        zip_file_url_1: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/dbscript/{{ lookup('env', 'RELEASE_VERSION') }}/dbscript-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
+        zip_file_name_1: "{{ zip_file_url_1 | basename }}"
+        zip_file_url_2: "https://maven.pkg.github.com/rakbank-internal/SMEDigitalBank-DB/com/rakbank/infosys/lib/smedigitalbank-database/rollback-sql/{{ lookup('env', 'RELEASE_VERSION') }}/rollback-sql-{{ lookup('env', 'RELEASE_VERSION') }}.zip"
+        zip_file_name_2: "{{ zip_file_url_2 | basename }}"
+        ORACLE_HOME: "/oracle19c/app/oracle/product/19.3.0/db_home"
+        PATH: "{{ ORACLE_HOME }}/bin:{{ PATH }}"
+        oracle_deployment_dir: "/backup"
+-----------------
+[oracle_servers]
+10.15.25.168 ansible_user=itdevtra
 
 -----------------------
 
