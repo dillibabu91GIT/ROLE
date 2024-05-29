@@ -4,11 +4,6 @@
   become_user: itdevtra
 
   tasks:
-    - name: Read configuration from config.yml
-      include_vars:
-        file: "{{ GITHUB_WORKSPACE }}/config.yml"
-        name: config_vars
-
     - name: Include IBPS-warfileinstall
       include_role:
         name: IBPS-warfileinstall
@@ -21,10 +16,10 @@
         release_version: "{{ lookup('env', 'release_version') }}"
         ansible_user: "itdevtra"
         Profile_home: "/ibm/IBM/Application/release"
-        WAR_FILE_PATH:  "{{ lookup('env', 'war_file_path') }}"
-        WAR_FILE_NAME:  "{{ lookup('env', 'war_file_name') }}"
-        APP_NAME:  "{{ lookup('env', 'app_name') }}"
-        CONTEXT_ROOT:  "{{ lookup('env', 'context_root') }}"
+        WAR_FILE_PATH: "{{ lookup('env', 'war_file_path') }}"
+        WAR_FILE_NAME: "{{ lookup('env', 'war_file_name') }}"
+        APP_NAME: "{{ lookup('env', 'app_name') }}"
+        CONTEXT_ROOT: "{{ lookup('env', 'context_root') }}"
         WAS_HOST: "10.15.11.209"
         WAS_PORT: "8879"
         WAS_ADMIN_USER: "deployer"
