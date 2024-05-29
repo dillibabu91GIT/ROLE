@@ -10,7 +10,6 @@
         name: config_vars
 
     - name: Include IBPS-warfileinstall
-      include_roles:
+      include_role:
         name: IBPS-warfileinstall
-        tasks_from: main.yml
-      
+        tasks_from: main
