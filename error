@@ -1,69 +1,96 @@
-this is playbook file this is kept in ibps-was-ansible-cd repository
+this is workflow file this is kept in ibps-was-ansible-cd repository
 
-- name: ibps deploy warfileinstall in was
-  hosts: '{{ target }}'
-  become: yes
-  become_user: itdevtra
+name: IBPS-warfileinstall
+run-name: IBPS-warfileinstall-${{ github.event.inputs.release_version }}
 
-  tasks:
-    - name: Include IBPS-warfileinstall
-      include_role:
-        name: IBPS-warfileinstall
-        tasks_from: main
-      vars:
-        github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
-        owner: "rakbank-internal"
-        repo: "ibps-was-ansible-cd"
-        branch: "IBPS-APP-ROLE"
-        release_version: "{{ lookup('env', 'release_version') }}"
-        ansible_user: "itdevtra"
-        Profile_home: "/ibm/IBM/Application/release"
-        WAR_FILE_PATH: "{{ lookup('env', 'war_file_path') }}"
-        WAR_FILE_NAME: "{{ lookup('env', 'war_file_name') }}"
-        APP_NAME: "{{ lookup('env', 'app_name') }}"
-        CONTEXT_ROOT: "{{ lookup('env', 'context_root') }}"
-        WAS_HOST: "10.15.11.209"
-        WAS_PORT: "8879"
-        WAS_ADMIN_USER: "deployer"
-        WAS_ADMIN_PASSWORD: "deployer@123"
-        CELL_NAME: "antibpsapp1Cell01"
-        CLUSTER_NAME: "BPMCLUSTER"
-        WSADMIN: "/ibm/IBM/WebSphere/AppServer/profiles/AppSrv01/bin/wsadmin.sh"
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version to deploy'
+        required: true 
+        type: string
+      war_file_path:
+        description: 'Path to the WAR file on the target server'
+        required: true
+        type: string
+        default: '/ibm/IBM/WebSphere/AppServer/profiles/AppSrv01/installedApps/antibpsapp1Cell01/KYC_Remediation.war'
+      war_file_name:
+        description: 'Name of the WAR file'
+        required: true
+        type: string
+        default: 'KYC_Remediation.war'
+      app_name:
+        description: 'Name of the deployed application'
+        required: true
+        type: string
+        default: 'KYC_Remediation_war'
+      context_root:
+        description: 'Context root of the deployed application'
+        required: true
+        type: string
+        default: '/KYC_Remediation'
 
+jobs:
+  deploy:
+    runs-on:
+      group: rakbank-self-hosted-runner
+      labels: [dehitdevtra1]
 
--------------------
-role/tasks file kept in  enterprise-ansible-roles repository
-- name: Copy war-install-in-was.sh to Target Server
-  become: yes
-  become_user: "{{ ansible_user }}"
-  copy:
-    #src: "/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/war-install-in-was.sh"
-    src: "{{ destination }}/war-install-in-was.sh"
-    dest: "{{ Profile_home }}/release.{{ release_version }}/war-install-in-was.sh"
-    mode: '0755'
+    steps:
+    - name: Checkout ibps-was-ansible-cd repository
+      uses: actions/checkout@v4
+      with:
+        repository: rakbank-internal/ibps-was-ansible-cd
+        ref: ${{ github.event.inputs.branch }}
+      
+    - name: Checkout enterprise-ansible-roles repository
+      uses: actions/checkout@v4
+      with:
+        repository: rakbank-internal/enterprise-ansible-roles
+        token: ${{ secrets.TOKEN_GITHUB }}
+        path: ansible-roles
+        ref: Feature
 
-- name: Run war-install-in-was.sh on Target Server
-  become: yes
-  become_user: "{{ ansible_user }}"
-  ignore_errors: yes
-  shell: |
-    cd "{{ Profile_home }}/release.{{ release_version }}"
-    ./war-install-in-was.sh "{{ WAS_HOST }}" "{{ WAS_PORT }}" "{{ WAS_ADMIN_USER }}" "{{ WAS_ADMIN_PASSWORD }}" "{{ WAR_FILE_PATH }}" "{{ APP_NAME }}" "{{ CONTEXT_ROOT }}" "{{ CELL_NAME }}" "{{ CLUSTER_NAME }}" "{{ WSADMIN }}" "{{ WAR_FILE_NAME }}"
-  args:
-    executable: /bin/bash
-  register: deploy_result
+    - name: Debug Working Directory
+      run: |
+        ls -al
+        pwd
+        
+    - name: Make war-install-in-was.sh executable
+      run: chmod +x war-install-in-was.sh
+  
+    - name: Run Ansible Playbook
+      env:
+        TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+        release_version: ${{ github.event.inputs.release_version }}
+        war_file_path: ${{ github.event.inputs.war_file_path }}
+        war_file_name: ${{ github.event.inputs.war_file_name }}
+        app_name: ${{ github.event.inputs.app_name }}
+        context_root: ${{ github.event.inputs.context_root }}
+      run: |
+        cd ${{ github.workspace }}
+        ansible-playbook -vvv -b --extra-vars "target=target_wasuat209 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
+        # ansible-playbook -vvv -b --extra-vars "target=target_wasuat210 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
+        # ansible-playbook -vvv -b --extra-vars "target=target_wasreplica86 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.ymlname: IBPS-warfileinstall
+---------------------
+this is my ansible.cfg file
 
-------------------
-my result 
-TASK [Include IBPS-warfileinstall] *********************************************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/IBPS-warfileinstall.yml:7
-META: ran handlers
-META: ran handlers
+[defaults]
+host_key_checking=False
+deprecation_warnings=False
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+remote_tmp=/tmp
+inventory=hosts.cfg
+roles_path=ansible-roles/roles/
+comment_warnings=False
+command_warnings=False
+interpreter_python=auto
+ANSIBLE_DEPRECATION_WARNINGS=False
+ANSIBLE_COMMAND_WARNINGS=False
+allow_world_readable_tmpfiles=yes
+timeout=30
+ansible_pipelining=True
 
-PLAY RECAP *********************************************************************
-ANTIBPSAPP1                : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-
-
-.......
-
-
+ 
