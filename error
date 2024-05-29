@@ -1,3 +1,5 @@
+this is playbook file this is kept in ibps-was-ansible-cd repository
+
 - name: ibps deploy warfileinstall in was
   hosts: '{{ target }}'
   become: yes
@@ -27,3 +29,41 @@
         CELL_NAME: "antibpsapp1Cell01"
         CLUSTER_NAME: "BPMCLUSTER"
         WSADMIN: "/ibm/IBM/WebSphere/AppServer/profiles/AppSrv01/bin/wsadmin.sh"
+
+
+-------------------
+role/tasks file kept in  enterprise-ansible-roles repository
+- name: Copy war-install-in-was.sh to Target Server
+  become: yes
+  become_user: "{{ ansible_user }}"
+  copy:
+    #src: "/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/war-install-in-was.sh"
+    src: "{{ destination }}/war-install-in-was.sh"
+    dest: "{{ Profile_home }}/release.{{ release_version }}/war-install-in-was.sh"
+    mode: '0755'
+
+- name: Run war-install-in-was.sh on Target Server
+  become: yes
+  become_user: "{{ ansible_user }}"
+  ignore_errors: yes
+  shell: |
+    cd "{{ Profile_home }}/release.{{ release_version }}"
+    ./war-install-in-was.sh "{{ WAS_HOST }}" "{{ WAS_PORT }}" "{{ WAS_ADMIN_USER }}" "{{ WAS_ADMIN_PASSWORD }}" "{{ WAR_FILE_PATH }}" "{{ APP_NAME }}" "{{ CONTEXT_ROOT }}" "{{ CELL_NAME }}" "{{ CLUSTER_NAME }}" "{{ WSADMIN }}" "{{ WAR_FILE_NAME }}"
+  args:
+    executable: /bin/bash
+  register: deploy_result
+
+------------------
+my result 
+TASK [Include IBPS-warfileinstall] *********************************************
+task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/IBPS-warfileinstall.yml:7
+META: ran handlers
+META: ran handlers
+
+PLAY RECAP *********************************************************************
+ANTIBPSAPP1                : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+.......
+
+
