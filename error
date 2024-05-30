@@ -1,20 +1,28 @@
-TASK [Include was-loosefile-deploy] ********************************************
-task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/IBPS-loose-file-deployment.yml:7
-ERROR! the role 'was-loosefile-deploy' was not found in /ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/roles:/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/ansible-roles/enterprise-ansible-roles/was-loosefile-deploy:/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook
+- name: ibps app deploy for loosefile
+  hosts: '{{ target }}'
+  become: yes
+  become_user: itdevtra
 
-The error appears to be in '/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/IBPS-loose-file-deployment.yml': line 9, column 15, but may
+  tasks:
+    - name: Set roles path
+      set_fact:
+        ansible_roles_path: "/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/ansible-roles/enterprise-ansible-roles"
 
-PLAY RECAP *********************************************************************
-ANTIBPSAPP1                : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-
-be elsewhere in the file depending on the exact syntax problem.
-
-The offending line appears to be:
-
+    - name: Include was-loosefile-deploy
       include_role:
         name: was-loosefile-deploy
-              ^ here
-Error: Process completed with exit code 2.
+        tasks_from: main.yml
+      vars:
+        github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+        owner: "rakbank-internal"
+        repo: "ibps-was-ansible-cd"
+        branch: "IBPS-APP-ROLE"
+        release_version: "{{ lookup('env', 'release_version') }}"
+        zip_file_url: "{{ lookup('env', 'ZIP_FILE_URL') }}"
+        zip_file_name: "{{ zip_file_url | basename }}"
+        ansible_user: "itdevtra"
+        Profile_home: "/ibm/IBM/Application/release"
+
 ------------------------------
 
 this is my playbook 
