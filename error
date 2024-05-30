@@ -4,10 +4,6 @@
   become_user: itdevtra
 
   tasks:
-    - name: Set roles path
-      set_fact:
-        ansible_roles_path: "/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/ansible-roles/enterprise-ansible-roles"
-
     - name: Include was-loosefile-deploy
       include_role:
         name: was-loosefile-deploy
