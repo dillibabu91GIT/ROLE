@@ -1,81 +1,46 @@
-this is workflow file this is kept in ibps-was-ansible-cd repository
+TASK [Include was-loosefile-deploy] ********************************************
+task path: /ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/IBPS-loose-file-deployment.yml:7
+ERROR! the role 'was-loosefile-deploy' was not found in /ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/roles:/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/ansible-roles/enterprise-ansible-roles/was-loosefile-deploy:/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook
 
-name: IBPS-warfileinstall
-run-name: IBPS-warfileinstall-${{ github.event.inputs.release_version }}
+The error appears to be in '/ansible/GITHUB_RUNNER/actions-runner10/_work/ibps-was-ansible-cd/ibps-was-ansible-cd/playbook/IBPS-loose-file-deployment.yml': line 9, column 15, but may
 
-on:
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: 'Release version to deploy'
-        required: true 
-        type: string
-      war_file_path:
-        description: 'Path to the WAR file on the target server'
-        required: true
-        type: string
-        default: '/ibm/IBM/WebSphere/AppServer/profiles/AppSrv01/installedApps/antibpsapp1Cell01/KYC_Remediation.war'
-      war_file_name:
-        description: 'Name of the WAR file'
-        required: true
-        type: string
-        default: 'KYC_Remediation.war'
-      app_name:
-        description: 'Name of the deployed application'
-        required: true
-        type: string
-        default: 'KYC_Remediation_war'
-      context_root:
-        description: 'Context root of the deployed application'
-        required: true
-        type: string
-        default: '/KYC_Remediation'
+PLAY RECAP *********************************************************************
+ANTIBPSAPP1                : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
-jobs:
-  deploy:
-    runs-on:
-      group: rakbank-self-hosted-runner
-      labels: [dehitdevtra1]
+be elsewhere in the file depending on the exact syntax problem.
 
-    steps:
-    - name: Checkout ibps-was-ansible-cd repository
-      uses: actions/checkout@v4
-      with:
-        repository: rakbank-internal/ibps-was-ansible-cd
-        ref: ${{ github.event.inputs.branch }}
-      
-    - name: Checkout enterprise-ansible-roles repository
-      uses: actions/checkout@v4
-      with:
-        repository: rakbank-internal/enterprise-ansible-roles
-        token: ${{ secrets.TOKEN_GITHUB }}
-        path: ansible-roles
-        ref: Feature
+The offending line appears to be:
 
-    - name: Debug Working Directory
-      run: |
-        ls -al
-        pwd
-        
-    - name: Make war-install-in-was.sh executable
-      run: chmod +x war-install-in-was.sh
-  
-    - name: Run Ansible Playbook
-      env:
-        TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
-        release_version: ${{ github.event.inputs.release_version }}
-        war_file_path: ${{ github.event.inputs.war_file_path }}
-        war_file_name: ${{ github.event.inputs.war_file_name }}
-        app_name: ${{ github.event.inputs.app_name }}
-        context_root: ${{ github.event.inputs.context_root }}
-      run: |
-        cd ${{ github.workspace }}
-        ansible-playbook -vvv -b --extra-vars "target=target_wasuat209 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
-        # ansible-playbook -vvv -b --extra-vars "target=target_wasuat210 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.yml
-        # ansible-playbook -vvv -b --extra-vars "target=target_wasreplica86 destination=${{ github.workspace }} release_version=${{ env.release_version }} war_file_path=${{ env.war_file_path }} war_file_name=${{ env.war_file_name }} app_name=${{ env.app_name }} context_root=${{ env.context_root }}" ./playbook/IBPS-warfileinstall.ymlname: IBPS-warfileinstall
----------------------
+      include_role:
+        name: was-loosefile-deploy
+              ^ here
+Error: Process completed with exit code 2.
+------------------------------
+
+this is my playbook 
+
+- name: ibps app deploy for loosefile
+  hosts: '{{ target }}'
+  become: yes
+  become_user: itdevtra
+
+  tasks:
+    - name: Include was-loosefile-deploy
+      include_role:
+        name: was-loosefile-deploy
+        tasks_from: main.yml
+      vars:
+        github_token: "{{ lookup('env', 'TOKEN_GITHUB') }}"
+        owner: "rakbank-internal"
+        repo: "ibps-was-ansible-cd"
+        branch: "IBPS-APP-ROLE"
+        release_version: "{{ lookup('env', 'release_version') }}"
+        zip_file_url: "{{ lookup('env', 'ZIP_FILE_URL') }}"
+        zip_file_name: "{{ zip_file_url | basename }}"
+        ansible_user: "itdevtra"
+        Profile_home: "/ibm/IBM/Application/release"
+     ----------------------------------------
 this is my ansible.cfg file
-
 [defaults]
 host_key_checking=False
 deprecation_warnings=False
@@ -83,7 +48,7 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
 remote_tmp=/tmp
 inventory=hosts.cfg
-roles_path=ansible-roles/roles/
+roles_path=ansible-roles/enterprise-ansible-roles/was-loosefile-deploy
 comment_warnings=False
 command_warnings=False
 interpreter_python=auto
@@ -92,5 +57,4 @@ ANSIBLE_COMMAND_WARNINGS=False
 allow_world_readable_tmpfiles=yes
 timeout=30
 ansible_pipelining=True
-
- 
+----------------------------------------
